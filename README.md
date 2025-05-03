@@ -20,6 +20,23 @@ A unified Go library for interacting with multiple LLM providers (OpenAI, Anthro
 go get github.com/obutora/ai-wrapper
 ```
 
+## Environment Variables
+
+Set the following environment variables for each provider you want to use:
+
+```bash
+# OpenAI
+export OPENAI_API_KEY=your_openai_api_key
+
+# Anthropic
+export ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Gemini
+export GEMINI_API_KEY=your_gemini_api_key
+```
+
+You can also use a `.env` file with a package like [godotenv](https://github.com/joho/godotenv) to load these variables.
+
 ## Quick Start
 
 ```go

@@ -20,6 +20,23 @@
 go get github.com/obutora/ai-wrapper
 ```
 
+## 環境変数の設定
+
+使用したいプロバイダごとに以下の環境変数を設定してください：
+
+```bash
+# OpenAI
+export OPENAI_API_KEY=your_openai_api_key
+
+# Anthropic
+export ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Gemini
+export GEMINI_API_KEY=your_gemini_api_key
+```
+
+[godotenv](https://github.com/joho/godotenv)などのパッケージを使用して、`.env`ファイルからこれらの変数を読み込むこともできます。
+
 ## クイックスタート
 
 ```go
