@@ -32,8 +32,8 @@ type Message struct {
 
 // GenTextParams は、テキスト生成に必要なパラメータを表す構造体です。
 type GenTextParams struct {
-	// Model は、使用するLLMモデルの名前です。
-	Model string `json:"model"`
+	// Model は、使用するLLMモデルです。
+	Model Model `json:"model"`
 	// Prompt は、単一のプロンプトテキストです。
 	Prompt string `json:"prompt,omitempty"`
 	// CacheEnabled は、キャッシュを有効にするかどうかを指定します。

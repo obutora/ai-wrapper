@@ -62,14 +62,8 @@ func (c *GeminiClient) GenText(params types.GenTextParams) (string, error, int) 
 		}
 	}
 
-	// モデル名を取得
-	modelName := params.Model
-	if modelName == "" {
-		modelName = "gemini-2.0-flash" // デフォルトモデル
-	}
-
 	// チャットセッションを作成
-	chat, err := c.client.Chats.Create(ctx, modelName, nil, history)
+	chat, err := c.client.Chats.Create(ctx, string(params.Model), nil, history)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", types.ErrAPIRequest, err), 0
 	}

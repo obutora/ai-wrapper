@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	wrapper "github.com/obutora/ai-wrapper"
+	"github.com/obutora/ai-wrapper/internal/types"
 )
 
 func init() {
@@ -41,7 +42,7 @@ func main() {
 
 	// 1回目のテキスト生成 - 具体的な情報を含む
 	openaiText1, err, openaiTokens1 := openaiClient.GenText(wrapper.GenTextParams{
-		Model: "gpt-4o",
+		Model: types.Model4_1Nano,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 		},
@@ -54,7 +55,7 @@ func main() {
 
 	// 2回目のテキスト生成 - 会話履歴を含む
 	openaiText2, err, openaiTokens2 := openaiClient.GenText(wrapper.GenTextParams{
-		Model: "gpt-4o",
+		Model: types.Model4_1Nano,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 			{Role: wrapper.RoleAssistant, Content: openaiText1},
@@ -75,7 +76,7 @@ func main() {
 
 	// 1回目のテキスト生成 - 具体的な情報を含む
 	anthropicText1, err, anthropicTokens1 := anthropicClient.GenText(wrapper.GenTextParams{
-		Model: "claude-3-sonnet",
+		Model: types.ModelClaude3Haiku,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 		},
@@ -88,7 +89,7 @@ func main() {
 
 	// 2回目のテキスト生成 - 会話履歴を含む
 	anthropicText2, err, anthropicTokens2 := anthropicClient.GenText(wrapper.GenTextParams{
-		Model: "claude-3-sonnet",
+		Model: types.ModelClaude3Haiku,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 			{Role: wrapper.RoleAssistant, Content: anthropicText1},
@@ -109,7 +110,7 @@ func main() {
 
 	// 1回目のテキスト生成 - 具体的な情報を含む
 	geminiText1, err, geminiTokens1 := geminiClient.GenText(wrapper.GenTextParams{
-		Model: "gemini-2.0-flash",
+		Model: types.ModelGemini25FlashPreview,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 		},
@@ -122,7 +123,7 @@ func main() {
 
 	// 2回目のテキスト生成 - 会話履歴を含む
 	geminiText2, err, geminiTokens2 := geminiClient.GenText(wrapper.GenTextParams{
-		Model: "gemini-2.0-flash",
+		Model: types.ModelGemini25FlashPreview,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 			{Role: wrapper.RoleAssistant, Content: geminiText1},

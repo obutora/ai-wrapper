@@ -17,6 +17,9 @@ const (
 	ProviderGemini    = types.ProviderGemini
 )
 
+// Model は、LLMモデルの種類を表す型です。
+type Model = types.Model
+
 // Role は、メッセージの役割を表す型です。
 type Role = types.Role
 

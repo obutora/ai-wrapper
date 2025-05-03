@@ -56,6 +56,9 @@ func (c *AnthropicClient) GenText(params types.GenTextParams) (string, error, in
 				{
 					OfRequestTextBlock: &anthropic.TextBlockParam{
 						Text: msg.Content,
+						// CacheControl: anthropic.CacheControlEphemeralParam{
+						// 	Type: constant.Ephemeral.Default,
+						// },
 					},
 				},
 			}
@@ -81,44 +84,14 @@ func (c *AnthropicClient) GenText(params types.GenTextParams) (string, error, in
 		})
 	}
 
-	// システムメッセージを抽出
-	var systemPrompt string
-	for _, msg := range params.Messages {
-		if msg.Role == types.RoleSystem {
-			systemPrompt = msg.Content
-			break
-		}
-	}
-
 	// モデル名を取得
-	var model anthropic.Model
-	switch params.Model {
-	case "claude-3-opus":
-		model = anthropic.ModelClaude3OpusLatest
-	case "claude-3-sonnet":
-		model = anthropic.ModelClaude3_7SonnetLatest
-	case "claude-3-haiku":
-		model = anthropic.ModelClaude3_5HaikuLatest
-	default:
-		// カスタムモデル名を使用
-		model = anthropic.Model(params.Model)
-	}
+	model := params.Model.ToAnthropicModel()
 
 	// APIリクエストパラメータを作成
 	messageParams := anthropic.MessageNewParams{
 		Model:     model,
 		Messages:  messages,
 		MaxTokens: 1024, // デフォルト値
-	}
-
-	// システムプロンプトがある場合は追加
-	if systemPrompt != "" {
-		// システムプロンプトをTextBlockParamに変換
-		messageParams.System = []anthropic.TextBlockParam{
-			{
-				Text: systemPrompt,
-			},
-		}
 	}
 
 	// APIリクエストを実行

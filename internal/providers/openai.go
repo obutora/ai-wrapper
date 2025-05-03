@@ -55,18 +55,7 @@ func (c *OpenAIClient) GenText(params types.GenTextParams) (string, error, int) 
 	}
 
 	// モデル名を取得
-	var model openai.ChatModel
-	switch params.Model {
-	case "gpt-4o":
-		model = openai.ChatModelGPT4o
-	case "gpt-4":
-		model = openai.ChatModelGPT4
-	case "gpt-3.5-turbo":
-		model = openai.ChatModelGPT3_5Turbo
-	default:
-		// カスタムモデル名を使用
-		model = openai.ChatModel(params.Model)
-	}
+	model := params.Model.ToOpenAIModel()
 
 	// APIリクエストパラメータを作成
 	chatParams := openai.ChatCompletionNewParams{
