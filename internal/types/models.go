@@ -29,6 +29,7 @@ const (
 	ModelGemini20Pro          Model = "gemini-2.0-pro"
 	ModelGemini25FlashPreview Model = "gemini-2.5-flash-preview-04-17"
 	ModelGemini25ProPreview   Model = "gemini-2.5-pro-preview-03-25"
+	ModelGemini25Pro          Model = "gemini-2.5-pro-exp-03-25"
 )
 
 // ToOpenAIModel は、共通モデル型をOpenAI SDKのモデル型に変換します。
