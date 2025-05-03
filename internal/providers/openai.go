@@ -1,0 +1,92 @@
+package providers
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/obutora/ai-wrapper/internal/types"
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
+)
+
+// OpenAIClient は、OpenAIプロバイダのクライアントを表す構造体です。
+type OpenAIClient struct {
+	client openai.Client
+}
+
+// NewOpenAIClient は、OpenAIクライアントの新しいインスタンスを作成します。
+func NewOpenAIClient(apiKey string) *OpenAIClient {
+	client := openai.NewClient(
+		option.WithAPIKey(apiKey),
+	)
+	return &OpenAIClient{client: client}
+}
+
+// GenText は、OpenAI APIを使用してテキストを生成します。
+func (c *OpenAIClient) GenText(params types.GenTextParams) (string, error, int) {
+	if params.Model == "" {
+		return "", types.ErrInvalidModel, 0
+	}
+
+	if len(params.Messages) == 0 && params.Prompt == "" {
+		return "", types.ErrEmptyMessages, 0
+	}
+
+	ctx := context.Background()
+	messages := []openai.ChatCompletionMessageParamUnion{}
+
+	// メッセージがある場合は、それらを変換して使用します
+	if len(params.Messages) > 0 {
+		for _, msg := range params.Messages {
+			switch msg.Role {
+			case types.RoleUser:
+				messages = append(messages, openai.UserMessage(msg.Content))
+			case types.RoleAssistant:
+				messages = append(messages, openai.AssistantMessage(msg.Content))
+			case types.RoleSystem:
+				messages = append(messages, openai.SystemMessage(msg.Content))
+			default:
+				messages = append(messages, openai.UserMessage(msg.Content))
+			}
+		}
+	} else if params.Prompt != "" {
+		// プロンプトがある場合は、ユーザーメッセージとして追加します
+		messages = append(messages, openai.UserMessage(params.Prompt))
+	}
+
+	// モデル名を取得
+	var model openai.ChatModel
+	switch params.Model {
+	case "gpt-4o":
+		model = openai.ChatModelGPT4o
+	case "gpt-4":
+		model = openai.ChatModelGPT4
+	case "gpt-3.5-turbo":
+		model = openai.ChatModelGPT3_5Turbo
+	default:
+		// カスタムモデル名を使用
+		model = openai.ChatModel(params.Model)
+	}
+
+	// APIリクエストパラメータを作成
+	chatParams := openai.ChatCompletionNewParams{
+		Messages: messages,
+		Model:    model,
+	}
+
+	// APIリクエストを実行
+	completion, err := c.client.Chat.Completions.New(ctx, chatParams)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", types.ErrAPIRequest, err), 0
+	}
+
+	// レスポンスからテキストとトークン数を取得
+	if len(completion.Choices) == 0 {
+		return "", fmt.Errorf("no completion choices returned"), 0
+	}
+
+	text := completion.Choices[0].Message.Content
+	tokens := int(completion.Usage.TotalTokens)
+
+	return text, nil, tokens
+}
