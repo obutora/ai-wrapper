@@ -56,9 +56,8 @@ func (c *AnthropicClient) GenText(params types.GenTextParams) (string, error, in
 				{
 					OfRequestTextBlock: &anthropic.TextBlockParam{
 						Text: msg.Content,
-						// CacheControl: anthropic.CacheControlEphemeralParam{
-						// 	Type: constant.Ephemeral.Default,
-						// },
+						// cacheを有効化
+						CacheControl: anthropic.CacheControlEphemeralParam{},
 					},
 				},
 			}
