@@ -8,7 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	wrapper "github.com/obutora/ai-wrapper"
-	"github.com/obutora/ai-wrapper/internal/types"
+	"github.com/obutora/ai-wrapper/models"
 )
 
 func init() {
@@ -45,7 +45,7 @@ func traditionalExample() {
 
 	// 1回目のテキスト生成 - 具体的な情報を含む
 	openaiText1, err, openaiTokens1 := openaiClient.GenText(wrapper.GenTextParams{
-		Model: types.Model4_1Nano,
+		Model: models.Model4_1Nano,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 		},
@@ -79,7 +79,7 @@ func traditionalExample() {
 
 	// 1回目のテキスト生成 - 具体的な情報を含む
 	anthropicText1, err, anthropicTokens1 := anthropicClient.GenText(wrapper.GenTextParams{
-		Model: types.ModelClaude3Haiku,
+		Model: models.ModelClaude3Haiku,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 		},
@@ -98,7 +98,7 @@ func traditionalExample() {
 
 	// 1回目のテキスト生成 - 具体的な情報を含む
 	geminiText1, err, geminiTokens1 := geminiClient.GenText(wrapper.GenTextParams{
-		Model: types.ModelGemini25FlashPreview,
+		Model: models.ModelGemini25FlashPreview,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 		},
@@ -129,7 +129,7 @@ func unifiedClientExample() {
 
 	// OpenAIモデルを使用（自動的にOpenAIプロバイダが選択される）
 	openaiText, err, openaiTokens := client.GenText(wrapper.GenTextParams{
-		Model: types.Model4_1Nano,
+		Model: models.Model4_1Nano,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "フランスの首都は何ですか？"},
 		},
@@ -141,7 +141,7 @@ func unifiedClientExample() {
 
 	// Anthropicモデルを使用（自動的にAnthropicプロバイダが選択される）
 	anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
-		Model: types.ModelClaude3Haiku,
+		Model: models.ModelClaude3Haiku,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "ドイツの首都は何ですか？"},
 		},
@@ -153,7 +153,7 @@ func unifiedClientExample() {
 
 	// Geminiモデルを使用（自動的にGeminiプロバイダが選択される）
 	geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
-		Model: types.ModelGemini25FlashPreview,
+		Model: models.ModelGemini25FlashPreview,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "日本の首都は何ですか？"},
 		},

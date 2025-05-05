@@ -5,20 +5,21 @@ import (
 
 	"github.com/obutora/ai-wrapper/internal/providers"
 	"github.com/obutora/ai-wrapper/internal/types"
+	"github.com/obutora/ai-wrapper/models"
 )
 
 // Provider は、LLMプロバイダの種類を表す型です。
-type Provider = types.Provider
+type Provider = models.Provider
 
 // 利用可能なプロバイダの定数
 const (
-	ProviderOpenAI    = types.ProviderOpenAI
-	ProviderAnthropic = types.ProviderAnthropic
-	ProviderGemini    = types.ProviderGemini
+	ProviderOpenAI    = models.ProviderOpenAI
+	ProviderAnthropic = models.ProviderAnthropic
+	ProviderGemini    = models.ProviderGemini
 )
 
 // Model は、LLMモデルの種類を表す型です。
-type Model = types.Model
+type Model = models.Model
 
 // Role は、メッセージの役割を表す型です。
 type Role = types.Role

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/obutora/ai-wrapper/internal/types"
+	"github.com/obutora/ai-wrapper/models"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
@@ -55,7 +56,7 @@ func (c *OpenAIClient) GenText(params types.GenTextParams) (string, error, int) 
 	}
 
 	// モデル名を取得
-	model := params.Model.ToOpenAIModel()
+	model := models.Model(params.Model).ToOpenAIModel()
 
 	// APIリクエストパラメータを作成
 	chatParams := openai.ChatCompletionNewParams{

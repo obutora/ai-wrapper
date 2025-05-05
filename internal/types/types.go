@@ -1,15 +1,17 @@
 package types
 
+import "github.com/obutora/ai-wrapper/models"
+
 // Provider は、LLMプロバイダの種類を表す型です。
-type Provider string
+type Provider = models.Provider
 
 const (
 	// ProviderOpenAI は、OpenAIプロバイダを表します。
-	ProviderOpenAI Provider = "openai"
+	ProviderOpenAI = models.ProviderOpenAI
 	// ProviderAnthropic は、Anthropicプロバイダを表します。
-	ProviderAnthropic Provider = "anthropic"
+	ProviderAnthropic = models.ProviderAnthropic
 	// ProviderGemini は、Geminiプロバイダを表します。
-	ProviderGemini Provider = "gemini"
+	ProviderGemini = models.ProviderGemini
 )
 
 // Role は、メッセージの役割を表す型です。
@@ -33,7 +35,7 @@ type Message struct {
 // GenTextParams は、テキスト生成に必要なパラメータを表す構造体です。
 type GenTextParams struct {
 	// Model は、使用するLLMモデルです。
-	Model Model `json:"model"`
+	Model models.Model `json:"model"`
 	// Prompt は、単一のプロンプトテキストです。
 	Prompt string `json:"prompt,omitempty"`
 	// CacheEnabled は、キャッシュを有効にするかどうかを指定します。

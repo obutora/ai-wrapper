@@ -7,6 +7,7 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
 	"github.com/obutora/ai-wrapper/internal/types"
+	"github.com/obutora/ai-wrapper/models"
 )
 
 // AnthropicClient は、Anthropicプロバイダのクライアントを表す構造体です。
@@ -84,13 +85,13 @@ func (c *AnthropicClient) GenText(params types.GenTextParams) (string, error, in
 	}
 
 	// モデル名を取得
-	model := params.Model.ToAnthropicModel()
+	model := models.Model(params.Model).ToAnthropicModel()
 
 	// APIリクエストパラメータを作成
 	messageParams := anthropic.MessageNewParams{
 		Model:     model,
 		Messages:  messages,
-		MaxTokens: 1024, // デフォルト値
+		MaxTokens: 1024 * 100, // NOTE: トークン数は適宜調整してください
 	}
 
 	// APIリクエストを実行
