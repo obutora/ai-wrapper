@@ -39,6 +39,8 @@ You can also use a `.env` file with a package like [godotenv](https://github.com
 
 ## Quick Start
 
+### Using a Single Provider
+
 ```go
 package main
 
@@ -69,6 +71,79 @@ func main() {
     }
     
     fmt.Printf("Response: %s\nTokens used: %d\n", text, tokens)
+}
+```
+
+### Using the Unified Client (Multiple Providers)
+
+```go
+package main
+
+import (
+    "fmt"
+    "os"
+    
+    wrapper "github.com/obutora/ai-wrapper"
+)
+
+func main() {
+    // Create a map of API keys for different providers
+    apiKeys := map[wrapper.Provider]string{
+        wrapper.ProviderOpenAI:    os.Getenv("OPENAI_API_KEY"),
+        wrapper.ProviderAnthropic: os.Getenv("ANTHROPIC_API_KEY"),
+        wrapper.ProviderGemini:    os.Getenv("GEMINI_API_KEY"),
+    }
+    
+    // Create a unified client that can use any provider
+    client, err := wrapper.NewUnifiedClient(apiKeys)
+    if err != nil {
+        panic(err)
+    }
+    
+    // Use an OpenAI model (automatically selects the OpenAI provider)
+    openaiText, err, openaiTokens := client.GenText(wrapper.GenTextParams{
+        Model: wrapper.ModelGPT4o,
+        Messages: []wrapper.Message{
+            {Role: wrapper.RoleUser, Content: "What is the capital of France?"},
+        },
+    })
+    
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("OpenAI Response: %s\nTokens used: %d\n\n", openaiText, openaiTokens)
+    
+    // Use an Anthropic model (automatically selects the Anthropic provider)
+    anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
+        Model: wrapper.ModelClaude3Opus,
+        Messages: []wrapper.Message{
+            {Role: wrapper.RoleUser, Content: "What is the capital of Germany?"},
+        },
+    })
+    
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Anthropic Response: %s\nTokens used: %d\n\n", anthropicText, anthropicTokens)
+    
+    // Use a Gemini model (automatically selects the Gemini provider)
+    geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
+        Model: wrapper.ModelGemini20Pro,
+        Messages: []wrapper.Message{
+            {Role: wrapper.RoleUser, Content: "What is the capital of Japan?"},
+        },
+    })
+    
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Gemini Response: %s\nTokens used: %d\n", geminiText, geminiTokens)
+    
+    // Register a custom model mapping if needed
+    client.RegisterCustomModel("my-custom-model", wrapper.ProviderOpenAI)
 }
 ```
 

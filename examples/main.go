@@ -33,7 +33,10 @@ func init() {
 	}
 }
 
-func main() {
+// 個別のクライアントを使用した例
+func traditionalExample() {
+	fmt.Println("=== 従来の方法（個別のクライアント） ===")
+
 	// OpenAIクライアントの作成
 	openaiClient, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"))
 	if err != nil {
@@ -55,7 +58,7 @@ func main() {
 
 	// 2回目のテキスト生成 - 会話履歴を含む
 	openaiText2, err, openaiTokens2 := openaiClient.GenText(wrapper.GenTextParams{
-		Model: types.Model4_1Nano,
+		Model: "gpt-4.1-nano-2025-04-14", // Model4_1Nano
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 			{Role: wrapper.RoleAssistant, Content: openaiText1},
@@ -87,21 +90,6 @@ func main() {
 
 	fmt.Printf("Anthropic Response 1: %s\nTokens used: %d\n\n", anthropicText1, anthropicTokens1)
 
-	// 2回目のテキスト生成 - 会話履歴を含む
-	anthropicText2, err, anthropicTokens2 := anthropicClient.GenText(wrapper.GenTextParams{
-		Model: types.ModelClaude3Haiku,
-		Messages: []wrapper.Message{
-			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
-			{Role: wrapper.RoleAssistant, Content: anthropicText1},
-			{Role: wrapper.RoleUser, Content: "田中さんの年齢、職業、趣味、そして先月何をしたか教えてください。"},
-		},
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Anthropic Response 2: %s\nTokens used: %d\n\n", anthropicText2, anthropicTokens2)
-
 	// Geminiクライアントの作成
 	geminiClient, err := wrapper.NewClient(wrapper.ProviderGemini, os.Getenv("GEMINI_API_KEY"))
 	if err != nil {
@@ -120,19 +108,72 @@ func main() {
 	}
 
 	fmt.Printf("Gemini Response 1: %s\nTokens used: %d\n\n", geminiText1, geminiTokens1)
+}
 
-	// 2回目のテキスト生成 - 会話履歴を含む
-	geminiText2, err, geminiTokens2 := geminiClient.GenText(wrapper.GenTextParams{
-		Model: types.ModelGemini25FlashPreview,
+// 統合クライアントを使用した例
+func unifiedClientExample() {
+	fmt.Println("=== 統合クライアントを使用した例 ===")
+
+	// 各プロバイダのAPIキーをマップで作成
+	apiKeys := map[wrapper.Provider]string{
+		wrapper.ProviderOpenAI:    os.Getenv("OPENAI_API_KEY"),
+		wrapper.ProviderAnthropic: os.Getenv("ANTHROPIC_API_KEY"),
+		wrapper.ProviderGemini:    os.Getenv("GEMINI_API_KEY"),
+	}
+
+	// 統合クライアントを作成
+	client, err := wrapper.NewUnifiedClient(apiKeys)
+	if err != nil {
+		panic(err)
+	}
+
+	// OpenAIモデルを使用（自動的にOpenAIプロバイダが選択される）
+	openaiText, err, openaiTokens := client.GenText(wrapper.GenTextParams{
+		Model: types.Model4_1Nano,
 		Messages: []wrapper.Message{
-			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
-			{Role: wrapper.RoleAssistant, Content: geminiText1},
-			{Role: wrapper.RoleUser, Content: "田中さんの年齢、職業、趣味、そして先月何をしたか教えてください。"},
+			{Role: wrapper.RoleUser, Content: "フランスの首都は何ですか？"},
 		},
 	})
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("OpenAI Response: %s\nTokens used: %d\n\n", openaiText, openaiTokens)
 
-	fmt.Printf("Gemini Response 2: %s\nTokens used: %d\n", geminiText2, geminiTokens2)
+	// Anthropicモデルを使用（自動的にAnthropicプロバイダが選択される）
+	anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
+		Model: types.ModelClaude3Haiku,
+		Messages: []wrapper.Message{
+			{Role: wrapper.RoleUser, Content: "ドイツの首都は何ですか？"},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Anthropic Response: %s\nTokens used: %d\n\n", anthropicText, anthropicTokens)
+
+	// Geminiモデルを使用（自動的にGeminiプロバイダが選択される）
+	geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
+		Model: types.ModelGemini25FlashPreview,
+		Messages: []wrapper.Message{
+			{Role: wrapper.RoleUser, Content: "日本の首都は何ですか？"},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Gemini Response: %s\nTokens used: %d\n\n", geminiText, geminiTokens)
+
+	// カスタムモデルのマッピングを登録
+	client.RegisterCustomModel("my-custom-model", wrapper.ProviderOpenAI)
+	fmt.Println("カスタムモデル 'my-custom-model' を OpenAI プロバイダに登録しました")
+}
+
+func main() {
+	// 従来の方法（個別のクライアント）を使用した例
+	traditionalExample()
+
+	fmt.Println("\n-----------------------------------\n")
+
+	// 統合クライアントを使用した例
+	unifiedClientExample()
 }

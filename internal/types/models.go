@@ -1,6 +1,9 @@
 package types
 
 import (
+	"regexp"
+	"strings"
+
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/openai/openai-go/shared"
 )
@@ -67,4 +70,30 @@ func (m Model) ToAnthropicModel() anthropic.Model {
 	default:
 		return string(m)
 	}
+}
+
+// GetProvider はモデル名からプロバイダーを判定します
+func (m Model) GetProvider() Provider {
+	modelName := string(m)
+
+	// OpenAIモデルのパターン
+	// - "gpt-" で始まるモデル (例: gpt-4, gpt-3.5-turbo)
+	// - "o" + 数字 + "-" で始まるモデル (例: o1-, o2-, o3-, o4-)
+	if strings.HasPrefix(modelName, "gpt-") ||
+		regexp.MustCompile(`^o\d+-`).MatchString(modelName) {
+		return ProviderOpenAI
+	}
+
+	// Anthropicモデルのパターン
+	if strings.HasPrefix(modelName, "claude-") {
+		return ProviderAnthropic
+	}
+
+	// Geminiモデルのパターン
+	if strings.HasPrefix(modelName, "gemini-") {
+		return ProviderGemini
+	}
+
+	// 不明なモデル
+	return ""
 }
