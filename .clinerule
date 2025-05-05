@@ -1,0 +1,30 @@
+# .clinerule - ファイル変更検知と自動アクション設定
+
+# このファイルは、プロジェクト内のファイル変更を検知し、
+# 特定のアクションを自動的に実行するための設定ファイルです。
+
+# 監視対象のファイルパターン
+watch_patterns:
+  - "internal/**/*.go"    # internal ディレクトリ内のすべての Go ファイル
+  - "wrapper.go"          # メインのラッパーファイル
+  - "examples/**/*.go"    # examples ディレクトリ内のすべての Go ファイル
+
+# 変更があった場合に実行するアクション
+actions:
+  - type: "update_readme"
+    description: "README.md と README_ja.md を更新する"
+    files:
+      - "README.md"
+      - "README_ja.md"
+    message: "ソースコードに変更があったため、READMEを更新してください。特にAPIの変更、新機能、または非推奨機能について記載してください。"
+
+# 無視するファイルパターン（オプション）
+ignore_patterns:
+  - "**/*.tmp"
+  - "**/.DS_Store"
+  - ".git/**"
+
+# 通知設定（オプション）
+notifications:
+  enabled: true
+  message: "プロジェクトファイルに変更がありました。必要なドキュメント更新を確認してください。"

@@ -39,6 +39,8 @@ export GEMINI_API_KEY=your_gemini_api_key
 
 ## クイックスタート
 
+### 単一のプロバイダを使用する場合
+
 ```go
 package main
 
@@ -69,6 +71,79 @@ func main() {
     }
     
     fmt.Printf("応答: %s\n使用トークン数: %d\n", text, tokens)
+}
+```
+
+### 統合クライアントを使用する場合（複数のプロバイダ）
+
+```go
+package main
+
+import (
+    "fmt"
+    "os"
+    
+    wrapper "github.com/obutora/ai-wrapper"
+)
+
+func main() {
+    // 各プロバイダのAPIキーをマップで作成
+    apiKeys := map[wrapper.Provider]string{
+        wrapper.ProviderOpenAI:    os.Getenv("OPENAI_API_KEY"),
+        wrapper.ProviderAnthropic: os.Getenv("ANTHROPIC_API_KEY"),
+        wrapper.ProviderGemini:    os.Getenv("GEMINI_API_KEY"),
+    }
+    
+    // 任意のプロバイダを使用できる統合クライアントを作成
+    client, err := wrapper.NewUnifiedClient(apiKeys)
+    if err != nil {
+        panic(err)
+    }
+    
+    // OpenAIモデルを使用（自動的にOpenAIプロバイダが選択される）
+    openaiText, err, openaiTokens := client.GenText(wrapper.GenTextParams{
+        Model: wrapper.ModelGPT4o,
+        Messages: []wrapper.Message{
+            {Role: wrapper.RoleUser, Content: "フランスの首都は何ですか？"},
+        },
+    })
+    
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("OpenAI応答: %s\n使用トークン数: %d\n\n", openaiText, openaiTokens)
+    
+    // Anthropicモデルを使用（自動的にAnthropicプロバイダが選択される）
+    anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
+        Model: wrapper.ModelClaude3Opus,
+        Messages: []wrapper.Message{
+            {Role: wrapper.RoleUser, Content: "ドイツの首都は何ですか？"},
+        },
+    })
+    
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Anthropic応答: %s\n使用トークン数: %d\n\n", anthropicText, anthropicTokens)
+    
+    // Geminiモデルを使用（自動的にGeminiプロバイダが選択される）
+    geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
+        Model: wrapper.ModelGemini20Pro,
+        Messages: []wrapper.Message{
+            {Role: wrapper.RoleUser, Content: "日本の首都は何ですか？"},
+        },
+    })
+    
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Gemini応答: %s\n使用トークン数: %d\n", geminiText, geminiTokens)
+    
+    // 必要に応じてカスタムモデルのマッピングを登録
+    client.RegisterCustomModel("my-custom-model", wrapper.ProviderOpenAI)
 }
 ```
 

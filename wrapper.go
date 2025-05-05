@@ -72,3 +72,62 @@ func NewClient(provider Provider, apiKey string) (LLMWrapper, error) {
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProvider, provider)
 	}
 }
+
+// UnifiedClient は、複数のプロバイダーを統合したクライアントです。
+// モデル名から自動的に適切なプロバイダーを選択します。
+type UnifiedClient struct {
+	clients              map[Provider]LLMWrapper
+	customModelProviders map[Model]Provider // カスタムモデル名とプロバイダーのマッピング
+}
+
+// NewUnifiedClient は、複数のプロバイダーを統合した新しいクライアントを作成します。
+// APIキーのマップを受け取り、各プロバイダーのクライアントを初期化します。
+func NewUnifiedClient(apiKeys map[Provider]string) (*UnifiedClient, error) {
+	clients := make(map[Provider]LLMWrapper)
+
+	for provider, apiKey := range apiKeys {
+		client, err := NewClient(provider, apiKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create client for provider %s: %w", provider, err)
+		}
+		clients[provider] = client
+	}
+
+	return &UnifiedClient{
+		clients:              clients,
+		customModelProviders: make(map[Model]Provider),
+	}, nil
+}
+
+// RegisterCustomModel は、カスタムモデル名とプロバイダーのマッピングを登録します。
+// これにより、標準のパターンマッチングでは検出できない特殊なモデル名も手動で登録できます。
+func (c *UnifiedClient) RegisterCustomModel(model Model, provider Provider) {
+	c.customModelProviders[model] = provider
+}
+
+// getProviderForModel は、モデル名からプロバイダーを判定します。
+func (c *UnifiedClient) getProviderForModel(model Model) Provider {
+	// カスタムマッピングを確認
+	if provider, ok := c.customModelProviders[model]; ok {
+		return provider
+	}
+
+	// 標準の判定ロジックを使用
+	return model.GetProvider()
+}
+
+// GenText は、モデル名から適切なプロバイダーを選択してテキストを生成します。
+func (c *UnifiedClient) GenText(params GenTextParams) (string, error, int) {
+	provider := c.getProviderForModel(params.Model)
+
+	if provider == "" {
+		return "", fmt.Errorf("%w: could not determine provider for model %s", ErrUnsupportedProvider, params.Model), 0
+	}
+
+	client, ok := c.clients[provider]
+	if !ok {
+		return "", fmt.Errorf("%w: no client for provider %s", ErrUnsupportedProvider, provider), 0
+	}
+
+	return client.GenText(params)
+}
