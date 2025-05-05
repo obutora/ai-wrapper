@@ -194,7 +194,7 @@ geminiClient, err := wrapper.NewClient(wrapper.ProviderGemini, os.Getenv("GEMINI
 text, err, tokens := client.GenText(wrapper.GenTextParams{
     Model: wrapper.ModelGPT4o,
     Messages: []wrapper.Message{
-        {Role: wrapper.RoleUser, Content: "フランスの首都は何ですか？"},
+        {Role: wrapper.RoleUser, Content: "フランスの首都はどこですか？"},
     },
 })
 
@@ -202,7 +202,7 @@ text, err, tokens := client.GenText(wrapper.GenTextParams{
 text, err, tokens := client.GenText(wrapper.GenTextParams{
     Model: wrapper.ModelGPT4o,
     Messages: []wrapper.Message{
-        {Role: wrapper.RoleUser, Content: "フランスの首都は何ですか？"},
+        {Role: wrapper.RoleUser, Content: "フランスの首都はどこですか？"},
         {Role: wrapper.RoleAssistant, Content: "フランスの首都はパリです。"},
         {Role: wrapper.RoleUser, Content: "その人口は？"},
     },
@@ -213,7 +213,7 @@ text, err, tokens := client.GenText(wrapper.GenTextParams{
     Model: wrapper.ModelGPT4o,
     Messages: []wrapper.Message{
         {Role: wrapper.RoleSystem, Content: "あなたは簡潔な回答を提供する役立つアシスタントです。"},
-        {Role: wrapper.RoleUser, Content: "フランスの首都は何ですか？"},
+        {Role: wrapper.RoleUser, Content: "フランスの首都はどこですか？"},
     },
 })
 ```
