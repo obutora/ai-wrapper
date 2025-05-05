@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/obutora/ai-wrapper/internal/types"
 	"github.com/obutora/ai-wrapper/models"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -24,13 +23,13 @@ func NewOpenAIClient(apiKey string) *OpenAIClient {
 }
 
 // GenText は、OpenAI APIを使用してテキストを生成します。
-func (c *OpenAIClient) GenText(params types.GenTextParams) (string, error, int) {
+func (c *OpenAIClient) GenText(params models.GenTextParams) (string, error, int) {
 	if params.Model == "" {
-		return "", types.ErrInvalidModel, 0
+		return "", models.ErrInvalidModel, 0
 	}
 
 	if len(params.Messages) == 0 && params.Prompt == "" {
-		return "", types.ErrEmptyMessages, 0
+		return "", models.ErrEmptyMessages, 0
 	}
 
 	ctx := context.Background()
@@ -40,11 +39,11 @@ func (c *OpenAIClient) GenText(params types.GenTextParams) (string, error, int) 
 	if len(params.Messages) > 0 {
 		for _, msg := range params.Messages {
 			switch msg.Role {
-			case types.RoleUser:
+			case models.RoleUser:
 				messages = append(messages, openai.UserMessage(msg.Content))
-			case types.RoleAssistant:
+			case models.RoleAssistant:
 				messages = append(messages, openai.AssistantMessage(msg.Content))
-			case types.RoleSystem:
+			case models.RoleSystem:
 				messages = append(messages, openai.SystemMessage(msg.Content))
 			default:
 				messages = append(messages, openai.UserMessage(msg.Content))
@@ -67,7 +66,7 @@ func (c *OpenAIClient) GenText(params types.GenTextParams) (string, error, int) 
 	// APIリクエストを実行
 	completion, err := c.client.Chat.Completions.New(ctx, chatParams)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", types.ErrAPIRequest, err), 0
+		return "", fmt.Errorf("%w: %v", models.ErrAPIRequest, err), 0
 	}
 
 	// レスポンスからテキストとトークン数を取得

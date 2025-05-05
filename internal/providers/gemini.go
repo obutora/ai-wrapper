@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/obutora/ai-wrapper/internal/types"
+	"github.com/obutora/ai-wrapper/models"
 	"google.golang.org/genai"
 )
 
@@ -29,13 +29,13 @@ func NewGeminiClient(apiKey string) *GeminiClient {
 }
 
 // GenText は、Gemini APIを使用してテキストを生成します。
-func (c *GeminiClient) GenText(params types.GenTextParams) (string, error, int) {
+func (c *GeminiClient) GenText(params models.GenTextParams) (string, error, int) {
 	if params.Model == "" {
-		return "", types.ErrInvalidModel, 0
+		return "", models.ErrInvalidModel, 0
 	}
 
 	if len(params.Messages) == 0 && params.Prompt == "" {
-		return "", types.ErrEmptyMessages, 0
+		return "", models.ErrEmptyMessages, 0
 	}
 
 	ctx := context.Background()
@@ -46,11 +46,11 @@ func (c *GeminiClient) GenText(params types.GenTextParams) (string, error, int) 
 		for _, msg := range params.Messages {
 			var role genai.Role
 			switch msg.Role {
-			case types.RoleUser:
+			case models.RoleUser:
 				role = genai.RoleUser
-			case types.RoleAssistant:
+			case models.RoleAssistant:
 				role = genai.RoleModel
-			case types.RoleSystem:
+			case models.RoleSystem:
 				// Geminiでは、システムメッセージはユーザーメッセージとして扱います
 				role = genai.RoleUser
 			default:
@@ -65,7 +65,7 @@ func (c *GeminiClient) GenText(params types.GenTextParams) (string, error, int) 
 	// チャットセッションを作成
 	chat, err := c.client.Chats.Create(ctx, string(params.Model), nil, history)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", types.ErrAPIRequest, err), 0
+		return "", fmt.Errorf("%w: %v", models.ErrAPIRequest, err), 0
 	}
 
 	// メッセージを送信
@@ -75,7 +75,7 @@ func (c *GeminiClient) GenText(params types.GenTextParams) (string, error, int) 
 	} else if len(params.Messages) > 0 {
 		// 最後のユーザーメッセージを使用
 		for i := len(params.Messages) - 1; i >= 0; i-- {
-			if params.Messages[i].Role == types.RoleUser {
+			if params.Messages[i].Role == models.RoleUser {
 				message = params.Messages[i].Content
 				break
 			}
@@ -84,13 +84,13 @@ func (c *GeminiClient) GenText(params types.GenTextParams) (string, error, int) 
 
 	// メッセージがない場合は、エラーを返します
 	if message == "" {
-		return "", types.ErrEmptyMessages, 0
+		return "", models.ErrEmptyMessages, 0
 	}
 
 	// APIリクエストを実行
 	res, err := chat.SendMessage(ctx, genai.Part{Text: message})
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", types.ErrAPIRequest, err), 0
+		return "", fmt.Errorf("%w: %v", models.ErrAPIRequest, err), 0
 	}
 
 	// レスポンスからテキストを取得

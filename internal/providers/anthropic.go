@@ -6,7 +6,6 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
-	"github.com/obutora/ai-wrapper/internal/types"
 	"github.com/obutora/ai-wrapper/models"
 )
 
@@ -24,13 +23,13 @@ func NewAnthropicClient(apiKey string) *AnthropicClient {
 }
 
 // GenText は、Anthropic APIを使用してテキストを生成します。
-func (c *AnthropicClient) GenText(params types.GenTextParams) (string, error, int) {
+func (c *AnthropicClient) GenText(params models.GenTextParams) (string, error, int) {
 	if params.Model == "" {
-		return "", types.ErrInvalidModel, 0
+		return "", models.ErrInvalidModel, 0
 	}
 
 	if len(params.Messages) == 0 && params.Prompt == "" {
-		return "", types.ErrEmptyMessages, 0
+		return "", models.ErrEmptyMessages, 0
 	}
 
 	ctx := context.Background()
@@ -41,11 +40,11 @@ func (c *AnthropicClient) GenText(params types.GenTextParams) (string, error, in
 		for _, msg := range params.Messages {
 			var role anthropic.MessageParamRole
 			switch msg.Role {
-			case types.RoleUser:
+			case models.RoleUser:
 				role = anthropic.MessageParamRoleUser
-			case types.RoleAssistant:
+			case models.RoleAssistant:
 				role = anthropic.MessageParamRoleAssistant
-			case types.RoleSystem:
+			case models.RoleSystem:
 				// Anthropicでは、システムメッセージは特別な処理が必要
 				// システムメッセージはシステムプロンプトとして扱います
 				continue
@@ -91,13 +90,13 @@ func (c *AnthropicClient) GenText(params types.GenTextParams) (string, error, in
 	messageParams := anthropic.MessageNewParams{
 		Model:     model,
 		Messages:  messages,
-		MaxTokens: 1024 * 100, // NOTE: トークン数は適宜調整してください
+		MaxTokens: 1024, // NOTE: トークン数は適宜調整してください
 	}
 
 	// APIリクエストを実行
 	response, err := c.client.Messages.New(ctx, messageParams)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", types.ErrAPIRequest, err), 0
+		return "", fmt.Errorf("%w: %v", models.ErrAPIRequest, err), 0
 	}
 
 	// レスポンスからテキストを取得

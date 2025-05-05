@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/obutora/ai-wrapper/internal/providers"
-	"github.com/obutora/ai-wrapper/internal/types"
 	"github.com/obutora/ai-wrapper/models"
 )
 
@@ -22,34 +21,34 @@ const (
 type Model = models.Model
 
 // Role は、メッセージの役割を表す型です。
-type Role = types.Role
+type Role = models.Role
 
 // 利用可能なロールの定数
 const (
-	RoleUser      = types.RoleUser
-	RoleAssistant = types.RoleAssistant
-	RoleSystem    = types.RoleSystem
+	RoleUser      = models.RoleUser
+	RoleAssistant = models.RoleAssistant
+	RoleSystem    = models.RoleSystem
 )
 
 // Message は、LLMとのやり取りに使用するメッセージを表す構造体です。
-type Message = types.Message
+type Message = models.Message
 
 // GenTextParams は、テキスト生成に必要なパラメータを表す構造体です。
-type GenTextParams = types.GenTextParams
+type GenTextParams = models.GenTextParams
 
 // GenTextResponse は、テキスト生成の結果を表す構造体です。
-type GenTextResponse = types.GenTextResponse
+type GenTextResponse = models.GenTextResponse
 
 // LLMWrapper は、LLMプロバイダとのやり取りを抽象化するインターフェースです。
-type LLMWrapper = types.LLMWrapper
+type LLMWrapper = models.LLMWrapper
 
 // エラー定数
 var (
-	ErrUnsupportedProvider = types.ErrUnsupportedProvider
-	ErrInvalidAPIKey       = types.ErrInvalidAPIKey
-	ErrInvalidModel        = types.ErrInvalidModel
-	ErrEmptyMessages       = types.ErrEmptyMessages
-	ErrAPIRequest          = types.ErrAPIRequest
+	ErrUnsupportedProvider = models.ErrUnsupportedProvider
+	ErrInvalidAPIKey       = models.ErrInvalidAPIKey
+	ErrInvalidModel        = models.ErrInvalidModel
+	ErrEmptyMessages       = models.ErrEmptyMessages
+	ErrAPIRequest          = models.ErrAPIRequest
 )
 
 // NewClient は、指定されたプロバイダとAPIキーに基づいて新しいLLMWrapperクライアントを作成します。
