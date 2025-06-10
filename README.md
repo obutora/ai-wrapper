@@ -37,6 +37,16 @@ export GEMINI_API_KEY=your_gemini_api_key
 
 You can also use a `.env` file with a package like [godotenv](https://github.com/joho/godotenv) to load these variables.
 
+## Configuration
+
+The wrapper supports configuration through the `models.Config` struct:
+
+```go
+config := models.Config{
+    MaxToken: 2048,  // Maximum tokens for response generation
+}
+```
+
 ## Quick Start
 
 ### Using a Single Provider
@@ -49,18 +59,24 @@ import (
     "os"
     
     wrapper "github.com/obutora/ai-wrapper"
+    "github.com/obutora/ai-wrapper/models"
 )
 
 func main() {
-    // Create a client for OpenAI
-    client, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"))
+    // Create a config with max tokens
+    config := models.Config{
+        MaxToken: 1000,  // Limit response to 1000 tokens
+    }
+    
+    // Create a client for OpenAI with config
+    client, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"), config)
     if err != nil {
         panic(err)
     }
     
     // Generate text with a single message
     text, err, tokens := client.GenText(wrapper.GenTextParams{
-        Model: wrapper.ModelGPT4o,
+        Model: models.ModelGPT4o,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "What is the capital of France?"},
         },
@@ -84,6 +100,7 @@ import (
     "os"
     
     wrapper "github.com/obutora/ai-wrapper"
+    "github.com/obutora/ai-wrapper/models"
 )
 
 func main() {
@@ -94,15 +111,20 @@ func main() {
         wrapper.ProviderGemini:    os.Getenv("GEMINI_API_KEY"),
     }
     
-    // Create a unified client that can use any provider
-    client, err := wrapper.NewUnifiedClient(apiKeys)
+    // Create a config
+    config := models.Config{
+        MaxToken: 2048,  // Set max tokens for all providers
+    }
+    
+    // Create a unified client with config
+    client, err := wrapper.NewUnifiedClient(apiKeys, config)
     if err != nil {
         panic(err)
     }
     
     // Use an OpenAI model (automatically selects the OpenAI provider)
     openaiText, err, openaiTokens := client.GenText(wrapper.GenTextParams{
-        Model: wrapper.ModelGPT4o,
+        Model: models.ModelGPT4o,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "What is the capital of France?"},
         },
@@ -116,7 +138,7 @@ func main() {
     
     // Use an Anthropic model (automatically selects the Anthropic provider)
     anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
-        Model: wrapper.ModelClaude3Opus,
+        Model: models.ModelClaude3Opus,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "What is the capital of Germany?"},
         },
@@ -130,7 +152,7 @@ func main() {
     
     // Use a Gemini model (automatically selects the Gemini provider)
     geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
-        Model: wrapper.ModelGemini20Pro,
+        Model: models.ModelGemini20Pro,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "What is the capital of Japan?"},
         },
@@ -177,14 +199,19 @@ func main() {
 ### Creating a Client
 
 ```go
+// Create config
+config := models.Config{
+    MaxToken: 1500,  // Maximum tokens for response
+}
+
 // OpenAI client
-openaiClient, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"))
+openaiClient, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"), config)
 
 // Anthropic client
-anthropicClient, err := wrapper.NewClient(wrapper.ProviderAnthropic, os.Getenv("ANTHROPIC_API_KEY"))
+anthropicClient, err := wrapper.NewClient(wrapper.ProviderAnthropic, os.Getenv("ANTHROPIC_API_KEY"), config)
 
 // Gemini client
-geminiClient, err := wrapper.NewClient(wrapper.ProviderGemini, os.Getenv("GEMINI_API_KEY"))
+geminiClient, err := wrapper.NewClient(wrapper.ProviderGemini, os.Getenv("GEMINI_API_KEY"), config)
 ```
 
 ### Generating Text
@@ -192,7 +219,7 @@ geminiClient, err := wrapper.NewClient(wrapper.ProviderGemini, os.Getenv("GEMINI
 ```go
 // Basic text generation
 text, err, tokens := client.GenText(wrapper.GenTextParams{
-    Model: wrapper.ModelGPT4o,
+    Model: models.ModelGPT4o,
     Messages: []wrapper.Message{
         {Role: wrapper.RoleUser, Content: "What is the capital of France?"},
     },
@@ -200,7 +227,7 @@ text, err, tokens := client.GenText(wrapper.GenTextParams{
 
 // With conversation history
 text, err, tokens := client.GenText(wrapper.GenTextParams{
-    Model: wrapper.ModelGPT4o,
+    Model: models.ModelGPT4o,
     Messages: []wrapper.Message{
         {Role: wrapper.RoleUser, Content: "What is the capital of France?"},
         {Role: wrapper.RoleAssistant, Content: "The capital of France is Paris."},
@@ -210,7 +237,7 @@ text, err, tokens := client.GenText(wrapper.GenTextParams{
 
 // With system message (for supported providers)
 text, err, tokens := client.GenText(wrapper.GenTextParams{
-    Model: wrapper.ModelGPT4o,
+    Model: models.ModelGPT4o,
     Messages: []wrapper.Message{
         {Role: wrapper.RoleSystem, Content: "You are a helpful assistant that provides concise answers."},
         {Role: wrapper.RoleUser, Content: "What is the capital of France?"},
@@ -252,6 +279,7 @@ import (
     
     "github.com/joho/godotenv"
     wrapper "github.com/obutora/ai-wrapper"
+    "github.com/obutora/ai-wrapper/models"
 )
 
 func init() {
@@ -263,8 +291,13 @@ func init() {
 }
 
 func main() {
-    // Create OpenAI client
-    openaiClient, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"))
+    // Create config with max tokens
+    config := models.Config{
+        MaxToken: 500,  // Limit responses to 500 tokens
+    }
+    
+    // Create OpenAI client with config
+    openaiClient, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"), config)
     if err != nil {
         panic(err)
     }
@@ -336,6 +369,11 @@ type GenTextParams struct {
     Messages     []Message `json:"messages"`
 }
 
+// Config represents configuration options for the wrapper
+type Config struct {
+    MaxToken int  // Maximum tokens for response generation
+}
+
 // LLMWrapper is an interface for interacting with LLM providers
 type LLMWrapper interface {
     GenText(params GenTextParams) (string, error, int)
@@ -345,8 +383,11 @@ type LLMWrapper interface {
 ### Functions
 
 ```go
-// NewClient creates a new LLM client for the specified provider
-func NewClient(provider Provider, apiKey string) (LLMWrapper, error)
+// NewClient creates a new LLM client for the specified provider with configuration
+func NewClient(provider Provider, apiKey string, config Config) (LLMWrapper, error)
+
+// NewUnifiedClient creates a unified client that can use multiple providers
+func NewUnifiedClient(apiKeys map[Provider]string, config Config) (*UnifiedClient, error)
 ```
 
 ### Error Constants

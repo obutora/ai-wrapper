@@ -37,8 +37,12 @@ func init() {
 func traditionalExample() {
 	fmt.Println("=== 従来の方法（個別のクライアント） ===")
 
+	config := models.Config{
+		MaxToken: 1000, // 最大トークン数
+	}
+
 	// OpenAIクライアントの作成
-	openaiClient, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"))
+	openaiClient, err := wrapper.NewClient(wrapper.ProviderOpenAI, os.Getenv("OPENAI_API_KEY"), config)
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +76,7 @@ func traditionalExample() {
 	fmt.Printf("OpenAI Response 2: %s\nTokens used: %d\n\n", openaiText2, openaiTokens2)
 
 	// Anthropicクライアントの作成
-	anthropicClient, err := wrapper.NewClient(wrapper.ProviderAnthropic, os.Getenv("ANTHROPIC_API_KEY"))
+	anthropicClient, err := wrapper.NewClient(wrapper.ProviderAnthropic, os.Getenv("ANTHROPIC_API_KEY"), config)
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +95,7 @@ func traditionalExample() {
 	fmt.Printf("Anthropic Response 1: %s\nTokens used: %d\n\n", anthropicText1, anthropicTokens1)
 
 	// Geminiクライアントの作成
-	geminiClient, err := wrapper.NewClient(wrapper.ProviderGemini, os.Getenv("GEMINI_API_KEY"))
+	geminiClient, err := wrapper.NewClient(wrapper.ProviderGemini, os.Getenv("GEMINI_API_KEY"), config)
 	if err != nil {
 		panic(err)
 	}
@@ -121,8 +125,12 @@ func unifiedClientExample() {
 		wrapper.ProviderGemini:    os.Getenv("GEMINI_API_KEY"),
 	}
 
+	config := models.Config{
+		MaxToken: 1000, // 最大トークン数
+	}
+
 	// 統合クライアントを作成
-	client, err := wrapper.NewUnifiedClient(apiKeys)
+	client, err := wrapper.NewUnifiedClient(apiKeys, config)
 	if err != nil {
 		panic(err)
 	}
