@@ -52,18 +52,18 @@ var (
 )
 
 // NewClient は、指定されたプロバイダとAPIキーに基づいて新しいLLMWrapperクライアントを作成します。
-func NewClient(provider Provider, apiKey string) (LLMWrapper, error) {
+func NewClient(provider Provider, apiKey string, config models.Config) (LLMWrapper, error) {
 	if apiKey == "" {
 		return nil, ErrInvalidAPIKey
 	}
 
 	switch provider {
 	case ProviderOpenAI:
-		return providers.NewOpenAIClient(apiKey), nil
+		return providers.NewOpenAIClient(apiKey, config), nil
 	case ProviderAnthropic:
-		return providers.NewAnthropicClient(apiKey), nil
+		return providers.NewAnthropicClient(apiKey, config), nil
 	case ProviderGemini:
-		client := providers.NewGeminiClient(apiKey)
+		client := providers.NewGeminiClient(apiKey, config)
 		if client == nil {
 			return nil, fmt.Errorf("failed to create Gemini client")
 		}
@@ -82,11 +82,11 @@ type UnifiedClient struct {
 
 // NewUnifiedClient は、複数のプロバイダーを統合した新しいクライアントを作成します。
 // APIキーのマップを受け取り、各プロバイダーのクライアントを初期化します。
-func NewUnifiedClient(apiKeys map[Provider]string) (*UnifiedClient, error) {
+func NewUnifiedClient(apiKeys map[Provider]string, config models.Config) (*UnifiedClient, error) {
 	clients := make(map[Provider]LLMWrapper)
 
 	for provider, apiKey := range apiKeys {
-		client, err := NewClient(provider, apiKey)
+		client, err := NewClient(provider, apiKey, config)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create client for provider %s: %w", provider, err)
 		}

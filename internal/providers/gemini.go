@@ -11,10 +11,11 @@ import (
 // GeminiClient は、Geminiプロバイダのクライアントを表す構造体です。
 type GeminiClient struct {
 	client *genai.Client
+	config models.Config
 }
 
 // NewGeminiClient は、Geminiクライアントの新しいインスタンスを作成します。
-func NewGeminiClient(apiKey string) *GeminiClient {
+func NewGeminiClient(apiKey string, config models.Config) *GeminiClient {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey:  apiKey,
@@ -25,7 +26,7 @@ func NewGeminiClient(apiKey string) *GeminiClient {
 		// 実際のアプリケーションでは、エラーハンドリングを改善する必要があります
 		return nil
 	}
-	return &GeminiClient{client: client}
+	return &GeminiClient{client: client, config: config}
 }
 
 // GenText は、Gemini APIを使用してテキストを生成します。
@@ -62,8 +63,12 @@ func (c *GeminiClient) GenText(params models.GenTextParams) (string, error, int)
 		}
 	}
 
+	conf := &genai.GenerateContentConfig{
+		MaxOutputTokens: int32(c.config.MaxToken),
+	}
+
 	// チャットセッションを作成
-	chat, err := c.client.Chats.Create(ctx, string(params.Model), nil, history)
+	chat, err := c.client.Chats.Create(ctx, string(params.Model), conf, history)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", models.ErrAPIRequest, err), 0
 	}

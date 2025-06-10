@@ -7,19 +7,21 @@ import (
 	"github.com/obutora/ai-wrapper/models"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/packages/param"
 )
 
 // OpenAIClient は、OpenAIプロバイダのクライアントを表す構造体です。
 type OpenAIClient struct {
 	client openai.Client
+	config models.Config
 }
 
 // NewOpenAIClient は、OpenAIクライアントの新しいインスタンスを作成します。
-func NewOpenAIClient(apiKey string) *OpenAIClient {
+func NewOpenAIClient(apiKey string, config models.Config) *OpenAIClient {
 	client := openai.NewClient(
 		option.WithAPIKey(apiKey),
 	)
-	return &OpenAIClient{client: client}
+	return &OpenAIClient{client: client, config: config}
 }
 
 // GenText は、OpenAI APIを使用してテキストを生成します。
@@ -61,6 +63,12 @@ func (c *OpenAIClient) GenText(params models.GenTextParams) (string, error, int)
 	chatParams := openai.ChatCompletionNewParams{
 		Messages: messages,
 		Model:    model,
+		MaxCompletionTokens: param.Opt[int64]{
+			Value: int64(c.config.MaxToken),
+		},
+		MaxTokens: param.Opt[int64]{
+			Value: int64(c.config.MaxToken),
+		},
 	}
 
 	// APIリクエストを実行

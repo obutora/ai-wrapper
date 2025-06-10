@@ -12,14 +12,15 @@ import (
 // AnthropicClient は、Anthropicプロバイダのクライアントを表す構造体です。
 type AnthropicClient struct {
 	client anthropic.Client
+	config models.Config
 }
 
 // NewAnthropicClient は、Anthropicクライアントの新しいインスタンスを作成します。
-func NewAnthropicClient(apiKey string) *AnthropicClient {
+func NewAnthropicClient(apiKey string, config models.Config) *AnthropicClient {
 	client := anthropic.NewClient(
 		option.WithAPIKey(apiKey),
 	)
-	return &AnthropicClient{client: client}
+	return &AnthropicClient{client: client, config: config}
 }
 
 // GenText は、Anthropic APIを使用してテキストを生成します。
@@ -90,7 +91,7 @@ func (c *AnthropicClient) GenText(params models.GenTextParams) (string, error, i
 	messageParams := anthropic.MessageNewParams{
 		Model:     model,
 		Messages:  messages,
-		MaxTokens: 1024, // NOTE: トークン数は適宜調整してください
+		MaxTokens: int64(c.config.MaxToken),
 	}
 
 	// APIリクエストを実行
