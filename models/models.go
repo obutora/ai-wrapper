@@ -26,6 +26,13 @@ const (
 	ModelClaude3Opus    Model = "claude-3-opus"
 	ModelClaude37Sonnet Model = "claude-3.7-sonnet"
 	ModelClaude3Haiku   Model = "claude-3-haiku"
+	ModelClaudeOpus41   Model = "claude-opus-4-1"
+	ModelClaudeSonnet45 Model = "claude-sonnet-4-5"
+	ModelClaudeOpus45   Model = "claude-opus-4-5"
+	ModelClaudeHaiku45  Model = "claude-haiku-4-5"
+	ModelClaudeSonnet46 Model = "claude-sonnet-4-6"
+	ModelClaudeOpus46   Model = "claude-opus-4-6"
+	ModelClaudeOpus47   Model = "claude-opus-4-7"
 
 	// Geminiモデル
 	ModelGemini20Flash        Model = "gemini-2.0-flash"
@@ -82,6 +89,21 @@ func (m Model) ToAnthropicModel() anthropic.Model {
 	default:
 		return string(m)
 	}
+}
+
+// SupportsTemperature は、モデルがtemperatureパラメータをサポートするかを返します。
+// Claude 4.5以降の新しいモデルではtemperatureが非推奨となっており、送信するとAPIエラーになります。
+func (m Model) SupportsTemperature() bool {
+	s := string(m)
+	if strings.HasPrefix(s, "claude-opus-4-7") ||
+		strings.HasPrefix(s, "claude-opus-4-6") ||
+		strings.HasPrefix(s, "claude-opus-4-5") ||
+		strings.HasPrefix(s, "claude-sonnet-4-6") ||
+		strings.HasPrefix(s, "claude-sonnet-4-5") ||
+		strings.HasPrefix(s, "claude-haiku-4-5") {
+		return false
+	}
+	return true
 }
 
 // GetProvider はモデル名からプロバイダーを判定します
