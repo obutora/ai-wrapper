@@ -73,11 +73,11 @@ func (m Model) ToOpenAIModel() shared.ChatModel {
 func (m Model) ToAnthropicModel() anthropic.Model {
 	switch m {
 	case ModelClaude3Opus:
-		return anthropic.ModelClaude3OpusLatest
+		return "claude-3-opus-latest"
 	case ModelClaude37Sonnet:
-		return anthropic.ModelClaude3_7SonnetLatest
+		return "claude-3-7-sonnet-latest"
 	case ModelClaude3Haiku:
-		return anthropic.ModelClaude3_5HaikuLatest
+		return "claude-3-5-haiku-latest"
 
 	default:
 		return string(m)

@@ -55,7 +55,7 @@ func (c *AnthropicClient) GenText(params models.GenTextParams) (string, error, i
 
 			content := []anthropic.ContentBlockParamUnion{
 				{
-					OfRequestTextBlock: &anthropic.TextBlockParam{
+					OfText: &anthropic.TextBlockParam{
 						Text: msg.Content,
 						// cacheを有効化
 						CacheControl: anthropic.CacheControlEphemeralParam{},
@@ -72,7 +72,7 @@ func (c *AnthropicClient) GenText(params models.GenTextParams) (string, error, i
 		// プロンプトがある場合は、ユーザーメッセージとして追加します
 		content := []anthropic.ContentBlockParamUnion{
 			{
-				OfRequestTextBlock: &anthropic.TextBlockParam{
+				OfText: &anthropic.TextBlockParam{
 					Text: params.Prompt,
 				},
 			},
