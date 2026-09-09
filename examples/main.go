@@ -83,7 +83,7 @@ func traditionalExample() {
 
 	// 1回目のテキスト生成 - 具体的な情報を含む
 	anthropicText1, err, anthropicTokens1 := anthropicClient.GenText(wrapper.GenTextParams{
-		Model: models.ModelClaude3Haiku,
+		Model: models.ModelClaudeSonnet5,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 		},
@@ -102,7 +102,7 @@ func traditionalExample() {
 
 	// 1回目のテキスト生成 - 具体的な情報を含む
 	geminiText1, err, geminiTokens1 := geminiClient.GenText(wrapper.GenTextParams{
-		Model: models.ModelGemini25FlashPreview,
+		Model: models.ModelGeminiFlashLatest,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "田中太郎さんは東京都在住の42歳のエンジニアで、趣味は登山と写真撮影です。彼は先月、富士山に登りました。"},
 		},
@@ -149,7 +149,7 @@ func unifiedClientExample() {
 
 	// Anthropicモデルを使用（自動的にAnthropicプロバイダが選択される）
 	anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
-		Model: models.ModelClaude3Haiku,
+		Model: models.ModelClaudeSonnet5,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "ドイツの首都は何ですか？"},
 		},
@@ -161,7 +161,7 @@ func unifiedClientExample() {
 
 	// Geminiモデルを使用（自動的にGeminiプロバイダが選択される）
 	geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
-		Model: models.ModelGemini25FlashPreview,
+		Model: models.ModelGeminiFlashLatest,
 		Messages: []wrapper.Message{
 			{Role: wrapper.RoleUser, Content: "日本の首都は何ですか？"},
 		},
@@ -176,12 +176,83 @@ func unifiedClientExample() {
 	fmt.Println("カスタムモデル 'my-custom-model' を OpenAI プロバイダに登録しました")
 }
 
+// ThinkingLevel（推論の深さ）を指定した例
+// 同じ ThinkingLevel を渡すだけで、各プロバイダのネイティブなパラメータに変換されます。
+//   - Gemini 3 以降: thinkingLevel / Gemini 2.5: thinkingBudget
+//   - OpenAI 推論モデル: reasoning_effort
+//   - Claude 4.6 以降: thinking(adaptive) + output_config.effort / Claude 3.7〜4.5: thinking(enabled) + budget_tokens
+func thinkingLevelExample() {
+	fmt.Println("=== ThinkingLevel を指定した例 ===")
+
+	apiKeys := map[wrapper.Provider]string{
+		wrapper.ProviderOpenAI:    os.Getenv("OPENAI_API_KEY"),
+		wrapper.ProviderAnthropic: os.Getenv("ANTHROPIC_API_KEY"),
+		wrapper.ProviderGemini:    os.Getenv("GEMINI_API_KEY"),
+	}
+
+	// Claude 3.7〜4.5 で thinking を使う場合、budget_tokens < MaxToken である必要があるため余裕を持たせる
+	config := models.Config{
+		MaxToken: 8000,
+	}
+
+	client, err := wrapper.NewUnifiedClient(apiKeys, config)
+	if err != nil {
+		panic(err)
+	}
+
+	question := "3つの箱A,B,Cのうち1つに賞品が入っています。Aを選んだ後、司会者がCを開けて空だと示しました。Bに変更すべきですか？理由を簡潔に。"
+
+	// Gemini: gemini-flash-latest（現在 gemini-3.8-flash）や gemini-3.* なら thinkingLevel、gemini-2.5-* なら thinkingBudget に変換される
+	geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
+		Model:         models.ModelGeminiFlashLatest,
+		ThinkingLevel: wrapper.ThinkingLevelHigh,
+		Messages: []wrapper.Message{
+			{Role: wrapper.RoleUser, Content: question},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Gemini (high): %s\nTokens used: %d\n\n", geminiText, geminiTokens)
+
+	// OpenAI: 推論モデルでは reasoning_effort に変換される（gpt-4o 等の非推論モデルでは無視される）
+	openaiText, err, openaiTokens := client.GenText(wrapper.GenTextParams{
+		Model:         models.ModelO4Mini,
+		ThinkingLevel: wrapper.ThinkingLevelLow,
+		Messages: []wrapper.Message{
+			{Role: wrapper.RoleUser, Content: question},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("OpenAI (low): %s\nTokens used: %d\n\n", openaiText, openaiTokens)
+
+	// Anthropic: Claude 4.6 以降（Sonnet 5 / Opus 5 含む）では adaptive thinking + effort に変換される
+	anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
+		Model:         models.ModelClaudeSonnet5,
+		ThinkingLevel: wrapper.ThinkingLevelMedium,
+		Messages: []wrapper.Message{
+			{Role: wrapper.RoleUser, Content: question},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Anthropic (medium): %s\nTokens used: %d\n\n", anthropicText, anthropicTokens)
+}
+
 func main() {
 	// 従来の方法（個別のクライアント）を使用した例
 	traditionalExample()
 
-	fmt.Println("\n-----------------------------------\n")
+	fmt.Print("\n-----------------------------------\n\n")
 
 	// 統合クライアントを使用した例
 	unifiedClientExample()
+
+	fmt.Print("\n-----------------------------------\n\n")
+
+	// ThinkingLevel を指定した例
+	thinkingLevelExample()
 }

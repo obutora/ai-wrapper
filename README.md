@@ -12,6 +12,7 @@ A unified Go library for interacting with multiple LLM providers (OpenAI, Anthro
 - Support for the latest models from OpenAI, Anthropic, and Gemini
 - Simple conversation handling with message history
 - Token usage tracking
+- Provider-agnostic reasoning depth control (`ThinkingLevel`) mapped to each provider's native thinking / reasoning parameters
 - Error handling with provider-specific details
 
 ## Installation
@@ -138,7 +139,7 @@ func main() {
     
     // Use an Anthropic model (automatically selects the Anthropic provider)
     anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
-        Model: models.ModelClaude3Opus,
+        Model: models.ModelClaudeOpus5,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "What is the capital of Germany?"},
         },
@@ -152,7 +153,7 @@ func main() {
     
     // Use a Gemini model (automatically selects the Gemini provider)
     geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
-        Model: models.ModelGemini20Pro,
+        Model: models.ModelGeminiProLatest,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "What is the capital of Japan?"},
         },
@@ -183,16 +184,24 @@ func main() {
 
 ### Anthropic
 
-- `ModelClaude3Opus` - Claude 3 Opus
-- `ModelClaude37Sonnet` - Claude 3.7 Sonnet
-- `ModelClaude3Haiku` - Claude 3 Haiku
+- `ModelClaudeOpus5` - Claude Opus 5 (latest Opus)
+- `ModelClaudeSonnet5` - Claude Sonnet 5 (latest Sonnet)
+- `ModelClaudeHaiku45` - Claude Haiku 4.5 (latest Haiku)
+- `ModelClaudeFable51` / `ModelClaudeFable5` - Claude Fable 5.1 / 5
+- `ModelClaudeOpus48` / `ModelClaudeOpus47` / `ModelClaudeOpus46` / `ModelClaudeSonnet46` - Claude 4.6-4.8 family
+- `ModelClaudeOpus45` / `ModelClaudeSonnet45` - Claude 4.5 family
+- `ModelClaude3Opus`, `ModelClaude37Sonnet`, `ModelClaude3Haiku`, `ModelClaudeOpus41` - **deprecated** (retired models, kept for compatibility)
 
 ### Gemini
 
-- `ModelGemini20Flash` - Gemini 2.0 Flash
-- `ModelGemini20Pro` - Gemini 2.0 Pro
-- `ModelGemini25FlashPreview` - Gemini 2.5 Flash Preview
-- `ModelGemini25ProPreview` - Gemini 2.5 Pro Preview
+Prefer the `*-latest` aliases unless you need to pin a specific version.
+
+- `ModelGeminiFlashLatest` - `gemini-flash-latest` (always the latest Flash; currently Gemini 3.8 Flash)
+- `ModelGeminiFlashLiteLatest` - `gemini-flash-lite-latest` (currently Gemini 3.5 Flash-Lite)
+- `ModelGeminiProLatest` - `gemini-pro-latest` (currently Gemini 3.1 Pro Preview)
+- `ModelGemini38Flash` / `ModelGemini35FlashLite` / `ModelGemini31ProPreview` - pinned versions of the above
+- `ModelGemini25Flash` / `ModelGemini25FlashLite` - Gemini 2.5 Flash / Flash-Lite
+- `ModelGemini25Pro`, `ModelGemini20Flash`, `ModelGemini20Pro`, `ModelGemini25FlashPreview`, `ModelGemini25ProPreview` - **deprecated** (retired models)
 
 ## Detailed Usage
 
@@ -244,6 +253,39 @@ text, err, tokens := client.GenText(wrapper.GenTextParams{
     },
 })
 ```
+
+### Thinking Level (Reasoning Depth)
+
+`GenTextParams.ThinkingLevel` controls how much reasoning ("thinking") the model performs before answering.
+The same value works across all providers: the wrapper converts it to each provider's native parameter,
+and silently ignores it on models that do not support reasoning.
+
+```go
+text, err, tokens := client.GenText(wrapper.GenTextParams{
+    Model:         models.ModelGeminiFlashLatest, // currently resolves to gemini-3.8-flash
+    ThinkingLevel: wrapper.ThinkingLevelHigh,      // minimal / low / medium / high / max
+    Messages: []wrapper.Message{
+        {Role: wrapper.RoleUser, Content: "Solve this step by step: ..."},
+    },
+})
+```
+
+| `ThinkingLevel` | Gemini 3+ / `*-latest` (`thinkingLevel`) | Gemini 2.5 (`thinkingBudget`) | OpenAI reasoning models (`reasoning_effort`) | Claude 4.6+ (`thinking: adaptive` + `output_config.effort`) | Claude 3.7-4.5 (`thinking: enabled` + `budget_tokens`) |
+|---|---|---|---|---|---|
+| `minimal` | `LOW` (Flash-Lite: `MINIMAL`) | 0 (Pro: 128) | `minimal` (`none` on GPT-5.1+, `low` on o-series) | `low` | 1024 |
+| `low` | `LOW` | 1024 | `low` | `low` | 2048 |
+| `medium` | `MEDIUM` | 8192 | `medium` | `medium` | 8192 |
+| `high` | `HIGH` | 24576 | `high` | `high` | 16384 |
+| `max` | `HIGH` | 24576 (Pro: 32768) | `high` (`xhigh` on GPT-5.2+) | `max` | 32768 |
+
+Notes:
+
+- Models without reasoning support (Gemini 2.0 and earlier, GPT-4 family, Claude 3.x, ...) ignore `ThinkingLevel`.
+- Version-less aliases (`gemini-flash-latest`, `gemini-pro-latest`, `gemini-flash-lite-latest`) currently resolve to Gemini 3.x and therefore use `thinkingLevel`.
+- `MINIMAL` support differs per Gemini 3 model (as of 2026-09: 3.5 Flash-Lite accepts it, 3.8 Flash and 3.1 Pro reject it with 400). The wrapper sends `MINIMAL` only to Flash-Lite models, and if a model rejects it the request is retried once with `LOW`.
+- On Claude 3.7-4.5, `budget_tokens` must be smaller than `MaxToken`: the budget is clamped to `MaxToken - 1`, and `ErrInvalidThinkingConfig` is returned when `MaxToken` is 1024 or less.
+- An unknown value returns `ErrInvalidThinkingLevel` before any API call is made.
+- Reasoning tokens are included in the returned token count.
 
 ### Error Handling
 
@@ -361,12 +403,25 @@ type Message struct {
     Content string `json:"content"`
 }
 
+// ThinkingLevel controls the reasoning depth across providers
+type ThinkingLevel string
+
+const (
+    ThinkingLevelDefault ThinkingLevel = ""        // provider/model default
+    ThinkingLevelMinimal ThinkingLevel = "minimal"
+    ThinkingLevelLow     ThinkingLevel = "low"
+    ThinkingLevelMedium  ThinkingLevel = "medium"
+    ThinkingLevelHigh    ThinkingLevel = "high"
+    ThinkingLevelMax     ThinkingLevel = "max"
+)
+
 // GenTextParams represents parameters for text generation
 type GenTextParams struct {
-    Model        Model     `json:"model"`
-    Prompt       string    `json:"prompt,omitempty"`
-    CacheEnabled bool      `json:"cache_enabled"`
-    Messages     []Message `json:"messages"`
+    Model         Model         `json:"model"`
+    Prompt        string        `json:"prompt,omitempty"`
+    CacheEnabled  bool          `json:"cache_enabled"`
+    Messages      []Message     `json:"messages"`
+    ThinkingLevel ThinkingLevel `json:"thinking_level,omitempty"`
 }
 
 // Config represents configuration options for the wrapper
@@ -399,6 +454,8 @@ var (
     ErrInvalidModel        = errors.New("invalid model")
     ErrEmptyMessages       = errors.New("empty messages")
     ErrAPIRequest          = errors.New("API request error")
+    ErrInvalidThinkingLevel  = errors.New("invalid thinking level")
+    ErrInvalidThinkingConfig = errors.New("invalid thinking config")
 )
 ```
 

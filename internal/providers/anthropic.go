@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
@@ -31,6 +32,10 @@ func (c *AnthropicClient) GenText(params models.GenTextParams) (string, error, i
 
 	if len(params.Messages) == 0 && params.Prompt == "" {
 		return "", models.ErrEmptyMessages, 0
+	}
+
+	if err := params.ThinkingLevel.Validate(); err != nil {
+		return "", err, 0
 	}
 
 	ctx := context.Background()
@@ -94,6 +99,11 @@ func (c *AnthropicClient) GenText(params models.GenTextParams) (string, error, i
 		MaxTokens: int64(c.config.MaxToken),
 	}
 
+	// ThinkingLevel をモデル世代に応じて adaptive+effort / enabled+budget_tokens に変換（非対応モデルでは無視）
+	if err := applyAnthropicThinking(&messageParams, params.ThinkingLevel); err != nil {
+		return "", err, 0
+	}
+
 	// APIリクエストを実行
 	response, err := c.client.Messages.New(ctx, messageParams)
 	if err != nil {
@@ -105,8 +115,14 @@ func (c *AnthropicClient) GenText(params models.GenTextParams) (string, error, i
 		return "", fmt.Errorf("no content returned"), 0
 	}
 
-	// レスポンスからテキストを取得
-	text := response.Content[0].Text
+	// thinking 有効時は thinking ブロックが先頭に来るため、text ブロックのみを連結する
+	var sb strings.Builder
+	for _, block := range response.Content {
+		if block.Type == "text" {
+			sb.WriteString(block.Text)
+		}
+	}
+	text := sb.String()
 
 	// トークン数を取得
 	tokens := int(response.Usage.OutputTokens + response.Usage.InputTokens)

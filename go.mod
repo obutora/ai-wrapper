@@ -1,12 +1,12 @@
 module github.com/obutora/ai-wrapper
 
-go 1.23.1
+go 1.24
 
 require (
 	github.com/anthropics/anthropic-sdk-go v1.41.0
 	github.com/joho/godotenv v1.5.1
 	github.com/openai/openai-go v0.1.0-beta.10
-	google.golang.org/genai v1.3.0
+	google.golang.org/genai v1.71.0
 )
 
 require (

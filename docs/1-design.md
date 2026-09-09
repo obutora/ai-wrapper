@@ -17,6 +17,11 @@
     - ただし、Geminiの場合、cacheの管理が煩雑なので初期の実装では省略してかまいません。
   - `[]messages` は、Role, Contentを含む構造体のスライスです。
   - `genText()` メソッドは、返り値として、生成されたテキスト、エラー、利用トークンを返します
+  - `genText()` の引数には、推論の深さを表す `ThinkingLevel`（minimal / low / medium / high / max）を含めることができます。
+    - プロバイダ横断の共通値として受け取り、内部で各プロバイダのネイティブなパラメータに変換します
+      （Gemini 3 以降: `thinkingLevel`、Gemini 2.5: `thinkingBudget`、OpenAI: `reasoning_effort`、
+      Claude 4.6 以降: `thinking: adaptive` + `output_config.effort`、Claude 3.7〜4.5: `thinking: enabled` + `budget_tokens`）。
+    - 推論非対応モデルでは無視します。変換ロジックは `internal/providers/thinking.go` に集約します。
 
 ## 各プロバイダの実装例
 このセクションでは、各プロバイダの実装例を示します。
@@ -85,7 +90,7 @@ func main() {
       genai.NewContentFromText("Great to meet you. What would you like to know?", genai.RoleModel),
   }
 
-  chat, _ := client.Chats.Create(ctx, "gemini-2.0-flash", nil, history)
+  chat, _ := client.Chats.Create(ctx, "gemini-flash-latest", nil, history)
   res, _ := chat.SendMessage(ctx, genai.Part{Text: "How many paws are in my house?"})
 
   if len(res.Candidates) > 0 {
@@ -118,7 +123,7 @@ func main() {
 				OfRequestTextBlock: &anthropic.TextBlockParam{Text: "What is a quaternion?"},
 			}},
 		}},
-		Model: anthropic.ModelClaude3_7SonnetLatest,
+		Model: "claude-sonnet-5",
 	})
 	if err != nil {
 		panic(err.Error())

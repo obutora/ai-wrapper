@@ -12,6 +12,7 @@
 - OpenAI、Anthropic、Geminiの最新モデルをサポート
 - メッセージ履歴による簡単な会話処理
 - トークン使用量の追跡
+- プロバイダ横断の推論深さ指定（`ThinkingLevel`）。各プロバイダのネイティブな thinking / reasoning パラメータへ自動変換
 - プロバイダ固有の詳細を含むエラー処理
 
 ## インストール
@@ -60,7 +61,7 @@ func main() {
     
     // 単一のメッセージでテキストを生成
     text, err, tokens := client.GenText(wrapper.GenTextParams{
-        Model: wrapper.ModelGPT4o,
+        Model: models.ModelGPT4o,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "フランスの首都は何ですか？"},
         },
@@ -102,7 +103,7 @@ func main() {
     
     // OpenAIモデルを使用（自動的にOpenAIプロバイダが選択される）
     openaiText, err, openaiTokens := client.GenText(wrapper.GenTextParams{
-        Model: wrapper.ModelGPT4o,
+        Model: models.ModelGPT4o,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "フランスの首都は何ですか？"},
         },
@@ -116,7 +117,7 @@ func main() {
     
     // Anthropicモデルを使用（自動的にAnthropicプロバイダが選択される）
     anthropicText, err, anthropicTokens := client.GenText(wrapper.GenTextParams{
-        Model: wrapper.ModelClaude3Opus,
+        Model: models.ModelClaudeOpus5,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "ドイツの首都は何ですか？"},
         },
@@ -130,7 +131,7 @@ func main() {
     
     // Geminiモデルを使用（自動的にGeminiプロバイダが選択される）
     geminiText, err, geminiTokens := client.GenText(wrapper.GenTextParams{
-        Model: wrapper.ModelGemini20Pro,
+        Model: models.ModelGeminiProLatest,
         Messages: []wrapper.Message{
             {Role: wrapper.RoleUser, Content: "日本の首都は何ですか？"},
         },
@@ -161,16 +162,24 @@ func main() {
 
 ### Anthropic
 
-- `ModelClaude3Opus` - Claude 3 Opus
-- `ModelClaude37Sonnet` - Claude 3.7 Sonnet
-- `ModelClaude3Haiku` - Claude 3 Haiku
+- `ModelClaudeOpus5` - Claude Opus 5（最新の Opus）
+- `ModelClaudeSonnet5` - Claude Sonnet 5（最新の Sonnet）
+- `ModelClaudeHaiku45` - Claude Haiku 4.5（最新の Haiku）
+- `ModelClaudeFable51` / `ModelClaudeFable5` - Claude Fable 5.1 / 5
+- `ModelClaudeOpus48` / `ModelClaudeOpus47` / `ModelClaudeOpus46` / `ModelClaudeSonnet46` - Claude 4.6〜4.8 系
+- `ModelClaudeOpus45` / `ModelClaudeSonnet45` - Claude 4.5 系
+- `ModelClaude3Opus`, `ModelClaude37Sonnet`, `ModelClaude3Haiku`, `ModelClaudeOpus41` - **非推奨**（提供終了モデル。互換性のために残置）
 
 ### Gemini
 
-- `ModelGemini20Flash` - Gemini 2.0 Flash
-- `ModelGemini20Pro` - Gemini 2.0 Pro
-- `ModelGemini25FlashPreview` - Gemini 2.5 Flash Preview
-- `ModelGemini25ProPreview` - Gemini 2.5 Pro Preview
+特定バージョンに固定する必要がなければ `*-latest` エイリアスを推奨します。
+
+- `ModelGeminiFlashLatest` - `gemini-flash-latest`（常に最新の Flash。現在は Gemini 3.8 Flash）
+- `ModelGeminiFlashLiteLatest` - `gemini-flash-lite-latest`（現在は Gemini 3.5 Flash-Lite）
+- `ModelGeminiProLatest` - `gemini-pro-latest`（現在は Gemini 3.1 Pro Preview）
+- `ModelGemini38Flash` / `ModelGemini35FlashLite` / `ModelGemini31ProPreview` - 上記のバージョン固定版
+- `ModelGemini25Flash` / `ModelGemini25FlashLite` - Gemini 2.5 Flash / Flash-Lite
+- `ModelGemini25Pro`, `ModelGemini20Flash`, `ModelGemini20Pro`, `ModelGemini25FlashPreview`, `ModelGemini25ProPreview` - **非推奨**（提供終了モデル）
 
 ## 詳細な使用方法
 
@@ -192,7 +201,7 @@ geminiClient, err := wrapper.NewClient(wrapper.ProviderGemini, os.Getenv("GEMINI
 ```go
 // 基本的なテキスト生成
 text, err, tokens := client.GenText(wrapper.GenTextParams{
-    Model: wrapper.ModelGPT4o,
+    Model: models.ModelGPT4o,
     Messages: []wrapper.Message{
         {Role: wrapper.RoleUser, Content: "フランスの首都はどこですか？"},
     },
@@ -200,7 +209,7 @@ text, err, tokens := client.GenText(wrapper.GenTextParams{
 
 // 会話履歴を含む
 text, err, tokens := client.GenText(wrapper.GenTextParams{
-    Model: wrapper.ModelGPT4o,
+    Model: models.ModelGPT4o,
     Messages: []wrapper.Message{
         {Role: wrapper.RoleUser, Content: "フランスの首都はどこですか？"},
         {Role: wrapper.RoleAssistant, Content: "フランスの首都はパリです。"},
@@ -210,13 +219,46 @@ text, err, tokens := client.GenText(wrapper.GenTextParams{
 
 // システムメッセージを含む（サポートされているプロバイダ向け）
 text, err, tokens := client.GenText(wrapper.GenTextParams{
-    Model: wrapper.ModelGPT4o,
+    Model: models.ModelGPT4o,
     Messages: []wrapper.Message{
         {Role: wrapper.RoleSystem, Content: "あなたは簡潔な回答を提供する役立つアシスタントです。"},
         {Role: wrapper.RoleUser, Content: "フランスの首都はどこですか？"},
     },
 })
 ```
+
+### ThinkingLevel（推論の深さ）
+
+`GenTextParams.ThinkingLevel` で、モデルが回答前に行う推論（thinking）の深さを指定できます。
+同じ値が全プロバイダで使え、ラッパー内部で各プロバイダのネイティブなパラメータに変換されます。
+推論をサポートしないモデルでは無視されます。
+
+```go
+text, err, tokens := client.GenText(wrapper.GenTextParams{
+    Model:         models.ModelGeminiFlashLatest, // 現在は gemini-3.8-flash に解決される
+    ThinkingLevel: wrapper.ThinkingLevelHigh,      // minimal / low / medium / high / max
+    Messages: []wrapper.Message{
+        {Role: wrapper.RoleUser, Content: "次の問題を段階的に解いてください: ..."},
+    },
+})
+```
+
+| `ThinkingLevel` | Gemini 3 以降 / `*-latest` (`thinkingLevel`) | Gemini 2.5 (`thinkingBudget`) | OpenAI 推論モデル (`reasoning_effort`) | Claude 4.6 以降 (`thinking: adaptive` + `output_config.effort`) | Claude 3.7〜4.5 (`thinking: enabled` + `budget_tokens`) |
+|---|---|---|---|---|---|
+| `minimal` | `LOW`（Flash-Lite は `MINIMAL`） | 0（Pro は 128） | `minimal`（GPT-5.1 以降は `none`、o 系は `low`） | `low` | 1024 |
+| `low` | `LOW` | 1024 | `low` | `low` | 2048 |
+| `medium` | `MEDIUM` | 8192 | `medium` | `medium` | 8192 |
+| `high` | `HIGH` | 24576 | `high` | `high` | 16384 |
+| `max` | `HIGH` | 24576（Pro は 32768） | `high`（GPT-5.2 以降は `xhigh`） | `max` | 32768 |
+
+補足:
+
+- 推論非対応モデル（Gemini 2.0 以前、GPT-4 系、Claude 3.x など）では `ThinkingLevel` は無視されます。
+- `gemini-flash-latest` / `gemini-pro-latest` / `gemini-flash-lite-latest` のようなバージョン無しの別名は現在 Gemini 3 系に解決されるため、`thinkingLevel` を使います。
+- `MINIMAL` の対応はモデルごとに異なります（2026-09 時点: 3.5 Flash-Lite は対応、3.8 Flash と 3.1 Pro は 400 で拒否）。ラッパーは Flash-Lite 系にのみ `MINIMAL` を送り、拒否された場合は `LOW` で 1 回だけ再試行します。
+- Claude 3.7〜4.5 では `budget_tokens` が `MaxToken` 未満である必要があるため、`MaxToken - 1` に丸められます。`MaxToken` が 1024 以下の場合は `ErrInvalidThinkingConfig` を返します。
+- 未知の値を指定すると、API を呼ぶ前に `ErrInvalidThinkingLevel` を返します。
+- 返却されるトークン数には推論トークンも含まれます。
 
 ### エラー処理
 
@@ -328,12 +370,25 @@ type Message struct {
     Content string `json:"content"`
 }
 
+// ThinkingLevel は推論の深さをプロバイダ横断で指定する型です
+type ThinkingLevel string
+
+const (
+    ThinkingLevelDefault ThinkingLevel = ""        // プロバイダ・モデルの既定動作
+    ThinkingLevelMinimal ThinkingLevel = "minimal"
+    ThinkingLevelLow     ThinkingLevel = "low"
+    ThinkingLevelMedium  ThinkingLevel = "medium"
+    ThinkingLevelHigh    ThinkingLevel = "high"
+    ThinkingLevelMax     ThinkingLevel = "max"
+)
+
 // GenTextParams はテキスト生成のパラメータを表す構造体です
 type GenTextParams struct {
-    Model        Model     `json:"model"`
-    Prompt       string    `json:"prompt,omitempty"`
-    CacheEnabled bool      `json:"cache_enabled"`
-    Messages     []Message `json:"messages"`
+    Model         Model         `json:"model"`
+    Prompt        string        `json:"prompt,omitempty"`
+    CacheEnabled  bool          `json:"cache_enabled"`
+    Messages      []Message     `json:"messages"`
+    ThinkingLevel ThinkingLevel `json:"thinking_level,omitempty"`
 }
 
 // LLMWrapper はLLMプロバイダとの対話のためのインターフェースです
@@ -358,6 +413,8 @@ var (
     ErrInvalidModel        = errors.New("invalid model")
     ErrEmptyMessages       = errors.New("empty messages")
     ErrAPIRequest          = errors.New("API request error")
+    ErrInvalidThinkingLevel  = errors.New("invalid thinking level")
+    ErrInvalidThinkingConfig = errors.New("invalid thinking config")
 )
 ```
 

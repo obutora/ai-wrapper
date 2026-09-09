@@ -33,6 +33,19 @@ const (
 // Message は、LLMとのやり取りに使用するメッセージを表す構造体です。
 type Message = models.Message
 
+// ThinkingLevel は、推論（thinking）の深さをプロバイダ横断で指定する型です。
+type ThinkingLevel = models.ThinkingLevel
+
+// 利用可能な ThinkingLevel の定数
+const (
+	ThinkingLevelDefault = models.ThinkingLevelDefault
+	ThinkingLevelMinimal = models.ThinkingLevelMinimal
+	ThinkingLevelLow     = models.ThinkingLevelLow
+	ThinkingLevelMedium  = models.ThinkingLevelMedium
+	ThinkingLevelHigh    = models.ThinkingLevelHigh
+	ThinkingLevelMax     = models.ThinkingLevelMax
+)
+
 // GenTextParams は、テキスト生成に必要なパラメータを表す構造体です。
 type GenTextParams = models.GenTextParams
 
@@ -44,11 +57,13 @@ type LLMWrapper = models.LLMWrapper
 
 // エラー定数
 var (
-	ErrUnsupportedProvider = models.ErrUnsupportedProvider
-	ErrInvalidAPIKey       = models.ErrInvalidAPIKey
-	ErrInvalidModel        = models.ErrInvalidModel
-	ErrEmptyMessages       = models.ErrEmptyMessages
-	ErrAPIRequest          = models.ErrAPIRequest
+	ErrUnsupportedProvider   = models.ErrUnsupportedProvider
+	ErrInvalidAPIKey         = models.ErrInvalidAPIKey
+	ErrInvalidModel          = models.ErrInvalidModel
+	ErrEmptyMessages         = models.ErrEmptyMessages
+	ErrAPIRequest            = models.ErrAPIRequest
+	ErrInvalidThinkingLevel  = models.ErrInvalidThinkingLevel
+	ErrInvalidThinkingConfig = models.ErrInvalidThinkingConfig
 )
 
 // NewClient は、指定されたプロバイダとAPIキーに基づいて新しいLLMWrapperクライアントを作成します。
