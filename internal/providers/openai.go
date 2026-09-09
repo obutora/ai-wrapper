@@ -7,7 +7,6 @@ import (
 	"github.com/obutora/ai-wrapper/models"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
-	"github.com/openai/openai-go/packages/param"
 )
 
 // OpenAIClient は、OpenAIプロバイダのクライアントを表す構造体です。
@@ -32,6 +31,10 @@ func (c *OpenAIClient) GenText(params models.GenTextParams) (string, error, int)
 
 	if len(params.Messages) == 0 && params.Prompt == "" {
 		return "", models.ErrEmptyMessages, 0
+	}
+
+	if err := params.ThinkingLevel.Validate(); err != nil {
+		return "", err, 0
 	}
 
 	ctx := context.Background()
@@ -63,12 +66,11 @@ func (c *OpenAIClient) GenText(params models.GenTextParams) (string, error, int)
 	chatParams := openai.ChatCompletionNewParams{
 		Messages: messages,
 		Model:    model,
-		MaxCompletionTokens: param.Opt[int64]{
-			Value: int64(c.config.MaxToken),
-		},
-		MaxTokens: param.Opt[int64]{
-			Value: int64(c.config.MaxToken),
-		},
+		// max_tokens は推論モデル（o 系 / GPT-5 系）で拒否されるため、全モデルで受理される
+		// max_completion_tokens のみを送信する
+		MaxCompletionTokens: openai.Int(int64(c.config.MaxToken)),
+		// ThinkingLevel を reasoning_effort に変換（推論モデル以外では空 = 未送信）
+		ReasoningEffort: openAIReasoningEffort(params.Model, params.ThinkingLevel),
 	}
 
 	// APIリクエストを実行

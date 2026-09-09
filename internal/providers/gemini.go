@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/obutora/ai-wrapper/models"
 	"google.golang.org/genai"
@@ -39,6 +40,10 @@ func (c *GeminiClient) GenText(params models.GenTextParams) (string, error, int)
 		return "", models.ErrEmptyMessages, 0
 	}
 
+	if err := params.ThinkingLevel.Validate(); err != nil {
+		return "", err, 0
+	}
+
 	ctx := context.Background()
 
 	// メッセージを変換
@@ -65,6 +70,8 @@ func (c *GeminiClient) GenText(params models.GenTextParams) (string, error, int)
 
 	conf := &genai.GenerateContentConfig{
 		MaxOutputTokens: int32(c.config.MaxToken),
+		// ThinkingLevel をモデル世代に応じて thinkingLevel / thinkingBudget に変換（非対応モデルでは nil）
+		ThinkingConfig: geminiThinkingConfig(params.Model, params.ThinkingLevel),
 	}
 
 	// チャットセッションを作成
@@ -94,16 +101,31 @@ func (c *GeminiClient) GenText(params models.GenTextParams) (string, error, int)
 
 	// APIリクエストを実行
 	res, err := chat.SendMessage(ctx, genai.Part{Text: message})
+	if isGeminiMinimalUnsupported(conf, err) {
+		// thinkingLevel=MINIMAL 非対応モデルだった場合は LOW に落として 1 回だけ再試行する
+		conf.ThinkingConfig.ThinkingLevel = genai.ThinkingLevelLow
+		if chat, err = c.client.Chats.Create(ctx, string(params.Model), conf, history); err == nil {
+			res, err = chat.SendMessage(ctx, genai.Part{Text: message})
+		}
+	}
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", models.ErrAPIRequest, err), 0
 	}
 
 	// レスポンスからテキストを取得
-	if len(res.Candidates) == 0 || len(res.Candidates[0].Content.Parts) == 0 {
+	if len(res.Candidates) == 0 || res.Candidates[0].Content == nil || len(res.Candidates[0].Content.Parts) == 0 {
 		return "", fmt.Errorf("no content returned"), 0
 	}
 
-	text := res.Candidates[0].Content.Parts[0].Text
+	// thinking 有効時は思考パートが含まれ得るため、テキストパートのみを連結する
+	var sb strings.Builder
+	for _, part := range res.Candidates[0].Content.Parts {
+		if part == nil || part.Thought {
+			continue
+		}
+		sb.WriteString(part.Text)
+	}
+	text := sb.String()
 
 	tokens := int(res.UsageMetadata.TotalTokenCount)
 
